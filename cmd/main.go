@@ -31,7 +31,7 @@ func PriceHandler(clients map[string]*market.Client) http.HandlerFunc {
 		enableCORS(w)
 		provider := r.URL.Query().Get("provider")
 		if provider == "" {
-			provider = "gecko"
+			provider = "coingecko"
 		}
 		client, ok := clients[provider]
 		if !ok {

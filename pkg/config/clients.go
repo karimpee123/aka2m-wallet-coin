@@ -37,7 +37,7 @@ func LoadClientsFromJSON(path string) (map[string]*market.Client, error) {
 		switch c.Name {
 		case "binance":
 			parser = market.BinanceParser
-		case "gecko":
+		case "coingecko", "gecko":
 			parser = market.GeckoParser
 		case "cryptocompare":
 			parser = market.CryptoCompareParser

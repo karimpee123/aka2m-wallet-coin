@@ -3,6 +3,7 @@ package market
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -58,6 +59,16 @@ func (c *Client) GetAllCryptoData(extraParams map[string]string) (map[string]Cry
 	for k, v := range extraParams {
 		params[k] = v
 	}
+	if c == nil {
+		log.Println("Client is nil")
+		return nil, fmt.Errorf("client is nil")
+	}
+
+	if c.Parser == nil {
+		log.Println("Parser function is nil")
+		return nil, fmt.Errorf("parser function is nil")
+	}
+
 	data, err := c.Parser(c.BaseURL, c.MarketURL, params, c.HTTPClient)
 	if err != nil {
 		return nil, err
