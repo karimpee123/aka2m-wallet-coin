@@ -1,10 +1,13 @@
 package main
 
 import (
+	"coin/internal/api"
 	"coin/internal/market"
+	"coin/pkg/config"
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func enableCORS(w http.ResponseWriter) {
@@ -14,27 +17,47 @@ func enableCORS(w http.ResponseWriter) {
 }
 
 func main() {
-	http.HandleFunc("/price", priceHandler)
-
+	clients, err := config.LoadClientsFromJSON("config/clients.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.HandleFunc("/price", PriceHandler(clients))
 	log.Println("Server running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func priceHandler(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
-	provider := r.URL.Query().Get("provider")
-	currency := r.URL.Query().Get("currency")
-	if provider == "" {
-		provider = "gecko"
+func PriceHandler(clients map[string]*market.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		enableCORS(w)
+		provider := r.URL.Query().Get("provider")
+		if provider == "" {
+			provider = "gecko"
+		}
+		client, ok := clients[provider]
+		if !ok {
+			http.Error(w, "provider not found", http.StatusBadRequest)
+			return
+		}
+		data, err := client.GetAllMarketData(nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		result := make([]api.PriceDTO, 0, len(data))
+		for symbol, md := range data {
+			dto := api.PriceDTO{
+				ID:           strings.ToLower(symbol),
+				Symbol:       strings.ToLower(symbol),
+				Name:         symbol,
+				Image:        "/media/images/coins/" + strings.ToLower(symbol) + ".png",
+				CurrentPrice: md.Price,
+				TotalVolume:  md.Volume24h,
+				MarketCap:    md.MarketCap,
+			}
+			dto.SparklineIn7D.Price = md.Sparkline
+			result = append(result, dto)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
 	}
-	if currency == "" {
-		currency = "usd"
-	}
-	prices, err := market.CryptoInstant.Fetch(provider, currency)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(prices)
 }

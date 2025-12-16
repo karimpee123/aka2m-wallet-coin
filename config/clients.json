@@ -1,0 +1,43 @@
+{
+  "clients": [
+    {
+      "name": "binance",
+      "base_url": "https://api.binance.com",
+      "market_url": "/api/v3/ticker/price",
+      "params": { "symbols": "BTCUSDT,ETHUSDT" },
+      "timeout_seconds": 10,
+      "cache_ttl_seconds": 60
+    },
+    {
+      "name": "coingecko",
+      "base_url": "https://api.coingecko.com/api/v3",
+      "market_url": "/coins/markets",
+      "params": { "vs_currency": "usd", "ids": "bitcoin", "sparkline": "true" },
+      "timeout_seconds": 10,
+      "cache_ttl_seconds": 60
+    },
+    {
+      "name": "cryptocompare",
+      "base_url": "https://min-api.cryptocompare.com",
+      "market_url": "/data/pricemultifull",
+      "params": { "fsyms": "BTC,ETH", "tsyms": "USD" },
+      "timeout_seconds": 10,
+      "cache_ttl_seconds": 60
+    },
+    {
+      "name": "coinmarketcap",
+      "base_url": "https://pro-api.coinmarketcap.com",
+      "market_url": "/v1/cryptocurrency/listings/latest",
+      "params": {
+        "convert": "USD",
+        "limit": "50"
+      },
+      "headers": {
+        "X-CMC_PRO_API_KEY": "7000f8959fda47bb83af54cc20c1858a"
+      },
+      "timeout_seconds": 10,
+      "cache_ttl_seconds": 60
+    }
+
+  ]
+}
