@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type ParserFunc func(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]MarketData, error)
+type ParserFunc func(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]CryptoData, error)
 
 var (
 	BinanceParser       = parseBinance
@@ -28,7 +28,7 @@ type Client struct {
 	HTTPClient  *http.Client
 	CacheTTL    time.Duration
 	LastFetched time.Time
-	Cache       map[string]MarketData
+	Cache       map[string]CryptoData
 }
 
 func NewClient(baseURL, marketURL string, params map[string]string, parser ParserFunc, timeout, cacheTTL time.Duration) *Client {
@@ -39,7 +39,7 @@ func NewClient(baseURL, marketURL string, params map[string]string, parser Parse
 		Parser:     parser,
 		HTTPClient: &http.Client{Timeout: timeout},
 		CacheTTL:   cacheTTL,
-		Cache:      make(map[string]MarketData),
+		Cache:      make(map[string]CryptoData),
 	}
 }
 
@@ -47,7 +47,7 @@ func (c *Client) ShouldFetch() bool {
 	return time.Since(c.LastFetched) > c.CacheTTL
 }
 
-func (c *Client) GetAllMarketData(extraParams map[string]string) (map[string]MarketData, error) {
+func (c *Client) GetAllCryptoData(extraParams map[string]string) (map[string]CryptoData, error) {
 	if time.Since(c.LastFetched) < c.CacheTTL && len(c.Cache) > 0 {
 		return c.Cache, nil
 	}
@@ -68,7 +68,7 @@ func (c *Client) GetAllMarketData(extraParams map[string]string) (map[string]Mar
 }
 
 func (c *Client) GetPrice(symbol string) (float64, error) {
-	data, err := c.GetAllMarketData(nil)
+	data, err := c.GetAllCryptoData(nil)
 	if err != nil {
 		return 0, err
 	}
@@ -79,7 +79,7 @@ func (c *Client) GetPrice(symbol string) (float64, error) {
 	return md.Price, nil
 }
 
-func parseBinance(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]MarketData, error) {
+func parseBinance(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]CryptoData, error) {
 	resp, err := client.Get(baseURL + marketURL)
 	if err != nil {
 		return nil, err
@@ -92,10 +92,10 @@ func parseBinance(baseURL, marketURL string, params map[string]string, client *h
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
 		return nil, err
 	}
-	result := make(map[string]MarketData)
+	result := make(map[string]CryptoData)
 	for _, r := range raw {
 		price, _ := strconv.ParseFloat(r.Price, 64)
-		result[r.Symbol] = MarketData{
+		result[r.Symbol] = CryptoData{
 			Symbol: r.Symbol,
 			Price:  price,
 		}
@@ -103,7 +103,7 @@ func parseBinance(baseURL, marketURL string, params map[string]string, client *h
 	return result, nil
 }
 
-func parseCoinGecko(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]MarketData, error) {
+func parseCoinGecko(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]CryptoData, error) {
 	url := baseURL + marketURL + "?"
 	for k, v := range params {
 		url += fmt.Sprintf("%s=%s&", k, v)
@@ -125,10 +125,10 @@ func parseCoinGecko(baseURL, marketURL string, params map[string]string, client 
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
 		return nil, err
 	}
-	result := make(map[string]MarketData)
+	result := make(map[string]CryptoData)
 	for _, r := range raw {
 		sym := strings.ToUpper(r.Symbol)
-		result[sym] = MarketData{
+		result[sym] = CryptoData{
 			Symbol:    sym,
 			Price:     r.CurrentPrice,
 			MarketCap: r.MarketCap,
@@ -139,7 +139,7 @@ func parseCoinGecko(baseURL, marketURL string, params map[string]string, client 
 	return result, nil
 }
 
-func parseCryptoCompare(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]MarketData, error) {
+func parseCryptoCompare(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]CryptoData, error) {
 	qs := "?"
 	for k, v := range params {
 		qs += fmt.Sprintf("%s=%s&", k, v)
@@ -158,7 +158,7 @@ func parseCryptoCompare(baseURL, marketURL string, params map[string]string, cli
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
 		return nil, err
 	}
-	result := make(map[string]MarketData)
+	result := make(map[string]CryptoData)
 	rawRAW, ok := raw["RAW"].(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("RAW field missing")
@@ -173,7 +173,7 @@ func parseCryptoCompare(baseURL, marketURL string, params map[string]string, cli
 			if !ok {
 				continue
 			}
-			md := MarketData{
+			md := CryptoData{
 				Symbol: strings.ToUpper(fromSym),
 			}
 			if v, ok := data["PRICE"].(float64); ok {
@@ -190,7 +190,7 @@ func parseCryptoCompare(baseURL, marketURL string, params map[string]string, cli
 	}
 	return result, nil
 }
-func parseCoinMarketCap(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]MarketData, error) {
+func parseCoinMarketCap(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]CryptoData, error) {
 	qs := "?"
 	for k, v := range params {
 		qs += fmt.Sprintf("%s=%s&", k, v)
@@ -222,10 +222,10 @@ func parseCoinMarketCap(baseURL, marketURL string, params map[string]string, cli
 	if len(raw.Data) == 0 {
 		return nil, fmt.Errorf("no data found in API response")
 	}
-	result := make(map[string]MarketData)
+	result := make(map[string]CryptoData)
 	for _, c := range raw.Data {
 		for _, q := range c.Quote {
-			result[c.Symbol] = MarketData{
+			result[c.Symbol] = CryptoData{
 				Symbol:    c.Symbol,
 				Price:     q.Price,
 				Volume24h: q.Volume24h,

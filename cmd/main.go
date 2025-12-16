@@ -38,7 +38,7 @@ func PriceHandler(clients map[string]*market.Client) http.HandlerFunc {
 			http.Error(w, "provider not found", http.StatusBadRequest)
 			return
 		}
-		data, err := client.GetAllMarketData(nil)
+		data, err := client.GetAllCryptoData(nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

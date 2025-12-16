@@ -1,6 +1,6 @@
 package market
 
-type MarketData struct {
+type CryptoData struct {
 	Symbol    string
 	Price     float64
 	Volume24h float64
