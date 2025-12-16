@@ -1,0 +1,20 @@
+{
+  "binance": {
+    "baseUrl": "https://api1.binance.com",
+    "marketUrl": "/api/v3/ticker/price"
+  },
+  "coingecko": {
+    "baseUrl": "https://api.coingecko.com/api/v3",
+    "marketUrl": "/coins/markets"
+  },
+  "cryptocompare": {
+    "baseUrl": "https://min-api.cryptocompare.com",
+    "marketUrl": "/data/pricemultifull",
+    "apiKey": ""
+  },
+  "coinmarketcap": {
+    "baseUrl": "https://pro-api.coinmarketcap.com",
+    "marketUrl": "/v1/cryptocurrency/listings/latest",
+    "apiKey": "7000f8959fda47bb83af54cc20c1858a"
+  }
+}
