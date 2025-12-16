@@ -190,7 +190,6 @@ func parseCryptoCompare(baseURL, marketURL string, params map[string]string, cli
 	}
 	return result, nil
 }
-
 func parseCoinMarketCap(baseURL, marketURL string, params map[string]string, client *http.Client) (map[string]MarketData, error) {
 	qs := "?"
 	for k, v := range params {
@@ -201,9 +200,12 @@ func parseCoinMarketCap(baseURL, marketURL string, params map[string]string, cli
 	req.Header.Set("X-CMC_PRO_API_KEY", params["api_key"])
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to make request: %v", err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status: %d", resp.StatusCode)
+	}
 	var raw struct {
 		Data []struct {
 			Symbol string `json:"symbol"`
@@ -215,9 +217,11 @@ func parseCoinMarketCap(baseURL, marketURL string, params map[string]string, cli
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode response body: %v", err)
 	}
-	fmt.Println(raw)
+	if len(raw.Data) == 0 {
+		return nil, fmt.Errorf("no data found in API response")
+	}
 	result := make(map[string]MarketData)
 	for _, c := range raw.Data {
 		for _, q := range c.Quote {

@@ -30,7 +30,7 @@
       "market_url": "/v1/cryptocurrency/listings/latest",
       "params": {
         "convert": "USD",
-        "limit": "50"
+        "limit": "10"
       },
       "headers": {
         "X-CMC_PRO_API_KEY": "7000f8959fda47bb83af54cc20c1858a"
